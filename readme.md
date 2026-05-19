@@ -80,3 +80,5 @@ http://YOUR_IP:8080/index.html
 - Python `http.server` — serves the chat UI over HTTP
 - React (via CDN) — browser UI
 - Tailwind CSS (via CDN) — styling
+
+- Project URL: https://github.com/Holyjudge/broadcast-system
