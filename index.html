@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Broadcast</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { -webkit-font-smoothing: antialiased; }
+    body { background: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    .messages-container::-webkit-scrollbar { width: 0px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function App() {
+      const [messages, setMessages] = useState([]);
+      const [inputValue, setInputValue] = useState("");
+      const [isConnected, setIsConnected] = useState(false);
+      const wsRef = useRef(null);
+      const bottomRef = useRef(null);
+
+      useEffect(() => {
+    const ws = new WebSocket("ws://YOUR_IP:8765");
+    wsRef.current = ws;
+
+    ws.onopen = () => setIsConnected(true);
+    ws.onclose = () => setIsConnected(false);
+
+     ws.onmessage = (event) => {
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.fromSelf && last?.text === event.data) return prev;
+        return [...prev, {
+          text: event.data,
+          fromSelf: false,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }];
+      });
+    };
+
+    return () => ws.close();
+  }, []);
+      const sendMessage = () => {
+    if (!inputValue.trim() || !isConnected) return;
+
+    wsRef.current.send(inputValue.trim());
+
+    setMessages(prev => [...prev, {
+      text: inputValue.trim(),
+      fromSelf: true,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+
+    setInputValue("");
+  };
+      useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+      return (
+    <div className="flex h-screen w-screen overflow-hidden">
+
+      {/* Sidebar */}
+      <div className="w-64 flex flex-col px-6 py-8 gap-6" style={{background: "#111111"}}>
+        <div>
+          <h1 className="text-white text-xl font-semibold tracking-tight">Broadcast</h1>
+          <p className="text-zinc-500 text-sm mt-1">Real-time messaging</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-400" : "bg-zinc-600"}`}
+            style={isConnected ? { boxShadow: "0 0 6px #4ade80" } : {}}
+          />
+          <span className="text-sm text-zinc-400">
+            {isConnected ? "Connected" : "Disconnected"}
+          </span>
+        </div>
+      </div>
+
+      {/* Main chat area */}
+      <div className="flex flex-col flex-1" style={{background: "#0f0f0f"}}>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-3 messages-container">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex flex-col gap-1 ${msg.fromSelf ? "items-end" : "items-start"}`}>
+              <div className={`px-4 py-2.5 rounded-2xl max-w-sm text-sm leading-relaxed
+                ${msg.fromSelf
+                  ? "bg-indigo-600 text-white rounded-br-sm"
+                  : "bg-zinc-800 text-zinc-100 rounded-bl-sm"
+                }`}>
+                {msg.text}
+              </div>
+              <span className="text-zinc-600 text-xs px-1">{msg.timestamp}</span>
+            </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input bar */}
+        <div className="px-8 py-5" style={{borderTop: "1px solid #1f1f1f"}}>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{background: "#1a1a1a"}}>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && sendMessage()}
+              placeholder={isConnected ? "Type a message..." : "Connecting..."}
+              disabled={!isConnected}
+              className="flex-1 bg-transparent text-zinc-100 text-sm outline-none placeholder-zinc-600"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!isConnected || !inputValue.trim()}
+              className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center
+                disabled:opacity-30 hover:bg-indigo-500 transition-colors duration-150"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+      }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
