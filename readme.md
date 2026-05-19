@@ -2,6 +2,10 @@
 
 A real-time broadcast messaging system built with Python WebSockets. Supports a CLI client and a browser-based chat UI.
 
+
+**Project URL:** https://github.com/Holyjudge/broadcast-system
+
+
 ## Features
 
 - Real-time message broadcasting to all connected clients
@@ -27,7 +31,7 @@ broadcast-server/
 
 ## Installation
 
-git clone https://github.com/Holyjudge/broadcast-system
+git clone https://github.com/Holyjudge/broadcast-system.git
 cd broadcast-system
 pip install -r requirements.txt
 
@@ -80,5 +84,3 @@ http://YOUR_IP:8080/index.html
 - Python `http.server` — serves the chat UI over HTTP
 - React (via CDN) — browser UI
 - Tailwind CSS (via CDN) — styling
-
-- Project URL: https://github.com/Holyjudge/broadcast-system
